@@ -1,7 +1,9 @@
 <resources>
   <string name="app_name">To-do Compose</string>
-
+  <string name="title">Title</string>
+  <string name="description">Description</string>
   <string name="list_screen_title">Tasks</string>
+  <string name="drop_down_arrow">Drop-Down Arrow Icon</string>
   <string name="empty_content">No Tasks Found</string>
   <string name="search_placeholder">Search</string>
   <string name="search_icon">Search Icon</string>
