@@ -33,6 +33,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import com.example.to_docompose.R
+import com.example.to_docompose.components.DisplayAlertDialog
 import com.example.to_docompose.components.PriorityItem
 import com.example.to_docompose.data.models.Priority
 import com.example.to_docompose.ui.theme.APP_BAR_ELEVATION
@@ -40,6 +41,7 @@ import com.example.to_docompose.ui.theme.TOP_APP_BAR_HEIGHT
 import com.example.to_docompose.ui.theme.topAppBarBackgroundColor
 import com.example.to_docompose.ui.theme.topAppBarContentColor
 import com.example.to_docompose.ui.viewmodels.SharedViewModel
+import com.example.to_docompose.util.Action
 import com.example.to_docompose.util.SearchAppBarState
 import com.example.to_docompose.util.TrailingIconState
 
@@ -57,7 +59,9 @@ fun ListAppBar(
                         SearchAppBarState.OPENED
                 },
                 onSortClicked = {},
-                onDeleteClicked = {}
+                onDeleteAllConfirmed = {
+                    sharedViewModel.action.value = Action.DELETE_ALL
+                }
             )
         }
 
@@ -72,7 +76,7 @@ fun ListAppBar(
                     sharedViewModel.searchTextState.value = ""
                 },
                 onSearchClicked = {
-
+                    sharedViewModel.searchDatabase(searchQuery = it)
                 }
             )
         }
@@ -84,7 +88,7 @@ fun ListAppBar(
 fun DefaultListAppBar(
     onSearchClicked: () -> Unit,
     onSortClicked: (Priority) -> Unit,
-    onDeleteClicked: () -> Unit
+    onDeleteAllConfirmed: () -> Unit
 ) {
     TopAppBar(
         title = {
@@ -97,7 +101,7 @@ fun DefaultListAppBar(
             ListAppBarActions(
                 onSearchClicked = onSearchClicked,
                 onSortClicked = onSortClicked,
-                onDeleteClicked = onDeleteClicked
+                onDeleteAllConfirmed = onDeleteAllConfirmed
             )
         },
         colors = TopAppBarDefaults.smallTopAppBarColors(containerColor = MaterialTheme.topAppBarBackgroundColor)
@@ -108,11 +112,27 @@ fun DefaultListAppBar(
 fun ListAppBarActions(
     onSearchClicked: () -> Unit,
     onSortClicked: (Priority) -> Unit,
-    onDeleteClicked: () -> Unit
+    onDeleteAllConfirmed: () -> Unit
 ) {
+
+    var openDialog by remember {
+        mutableStateOf(false)
+    }
+
+    DisplayAlertDialog(title = stringResource(id = R.string.delete_all_task),
+        message = stringResource(
+            id = R.string.delete_all_task_confirmation
+        ),
+        openDialog = openDialog,
+        closeDialog = { openDialog = false },
+        onYesClicked = { onDeleteAllConfirmed() }
+    )
+
     SearchAction(onSearchClicked = onSearchClicked)
     SortAction(onSortClicked = onSortClicked)
-    DeleteAllAction(onDeleteClicked = onDeleteClicked)
+    DeleteAllAction(onDeleteAllClicked = {
+        openDialog = true
+    })
 }
 
 @Composable
@@ -178,7 +198,7 @@ fun SortAction(
 
 @Composable
 fun DeleteAllAction(
-    onDeleteClicked: () -> Unit
+    onDeleteAllClicked: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     IconButton(
@@ -204,7 +224,7 @@ fun DeleteAllAction(
                 },
                 onClick = {
                     expanded = false
-                    onDeleteClicked()
+                    onDeleteAllClicked()
                 }
             )
         }
@@ -221,7 +241,7 @@ fun SearchAppBar(
 ) {
 
     var trailingIconState by remember {
-         mutableStateOf(TrailingIconState.READY_TO_DELETE)
+        mutableStateOf(TrailingIconState.READY_TO_DELETE)
     }
 
     Surface(
@@ -268,15 +288,16 @@ fun SearchAppBar(
             trailingIcon = {
                 IconButton(
                     onClick = {
-                        when(trailingIconState){
+                        when (trailingIconState) {
                             TrailingIconState.READY_TO_DELETE -> {
                                 onTextChange("")
                                 trailingIconState = TrailingIconState.READY_TO_CLOSE
                             }
+
                             TrailingIconState.READY_TO_CLOSE -> {
-                                if(text.isNotEmpty()){
+                                if (text.isNotEmpty()) {
                                     onTextChange("")
-                                }else{
+                                } else {
                                     onCloseClicked()
                                     trailingIconState = TrailingIconState.READY_TO_DELETE
                                 }
@@ -318,7 +339,7 @@ private fun DefaultListAppBarPreview() {
     DefaultListAppBar(
         onSearchClicked = {},
         onSortClicked = {},
-        onDeleteClicked = {}
+        onDeleteAllConfirmed = {}
     )
 }
 
